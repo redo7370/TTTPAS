@@ -37,6 +37,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1088,6 +1089,13 @@ class DataBase {
             String key = entry.getKey();
             int value = entry.getValue();
             saveString = saveString + key + " " + String.valueOf(value) + "\n";
+        }
+
+        try {
+            file = new File("data.txt");
+            file.createNewFile();
+        } catch (IOException e) {
+            throw new IllegalStateException("DATA FILE DOES NOT EXIST");
         }
 
         try {
