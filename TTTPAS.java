@@ -345,7 +345,11 @@ class TTTPanel extends JPanel {
                 break;
 
             default:
-                outputLabel.setText(String.format("Next Turn %s", instructionList.get(2)));
+                if (isSlotFree()) {
+                    outputLabel.setText(String.format("%s's Turn", TTTPAS.playPanel.getPlayerNames().get(0)));
+                } else {
+                    outputLabel.setText("Draw");
+                }
                 break;
 
         }
@@ -567,13 +571,7 @@ class TTTPanel extends JPanel {
                     break;
 
                 default:
-                    if (!BOT_ACTIVE && isSlotFree()) {
-                        if (TTTPAS.getTurn() % 2 == 0) {
-                            outputLabel.setText(String.format("%s's Turn", TTTPAS.playPanel.getPlayerNames().get(0)));
-                        } else if (TTTPAS.getTurn() % 2 == 1) {
-                            outputLabel.setText(String.format("%s's Turn", TTTPAS.playPanel.getPlayerNames().get(1)));
-                        }
-                    } else if (BOT_ACTIVE && isSlotFree()) {
+                    if (isSlotFree()) {
                         outputLabel.setText(String.format("%s's Turn", TTTPAS.playPanel.getPlayerNames().get(0)));
                     } else {
                         outputLabel.setText("Draw");
@@ -653,7 +651,6 @@ class TTTPanel extends JPanel {
     }
 
     private static String displayWinner(String winner) {
-        System.out.println("CALLED");
         gameStatus = false;
 
         switch (winner) {
@@ -1006,8 +1003,6 @@ class WinnerBoard extends JPanel {
             Map.Entry<String, Integer> entry = iterator.next();
             String key = entry.getKey();
             int value = entry.getValue();
-
-            System.out.println(key);
 
             boolean guard = true;
 
