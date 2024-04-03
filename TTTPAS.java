@@ -157,22 +157,22 @@ public class TTTPAS {
  * - Defines The Basic Game Routine
  */
 class TTTPanel extends JPanel {
-    private static char[][] currentBoard;
-    public static boolean gameStatus = true;
-    private static boolean BOT_ACTIVE = false;
-    private static boolean gameStart = true;
-    private static boolean countWinner = true;
-    public static TPanelRow firstRow, secondRow, thirdRow;
-    private int panelAmount = 5;
-    private static List<Container> first, second, third;
-    private static int row, column;
-    private static List<String> instructionList;
-    private static JLabel outputLabel;
-    private static JButton resetButton;
-    private static MinMax virtualOpponent = new MinMax();
+    private static char[][] currentBoard; // Temporary Board (Overwritten Each Turn)
+    public static boolean gameStatus = true; // True If Game Hasn't Concluded
+    private static boolean BOT_ACTIVE = false; // True If Player Plays Against Minimax Algorithm
+    private static boolean gameStart = true; // Returned To Button Which Activates Minimax In Order To Prevent Mid-Game
+                                             // Interference
+    private static boolean countWinner = true; // Guard Boolean To Prevent Wins From Being Counted Twice
+    public static TPanelRow firstRow, secondRow, thirdRow; // Rows Of The TicTacToe Board From Subclass TPanelRow
+    private int panelAmount = 5; // Amount Of Subpanels In TTTPanel
+    private static int row, column; // Stores Current Position Of A Move
+    private static List<String> instructionList; // Stores Current Output For outputLabel In outputPanel
+    private static JLabel outputLabel; // Initializes outputLabel
+    private static JButton resetButton; // Initializes resetButton
+    private static MinMax virtualOpponent = new MinMax(); // Initializes Class MinMax Containing The Minnax Algorithm
 
+    // Basic Structure Of The TicTacToe Field And Directly Associated Components
     public TTTPanel() {
-
         this.setLayout(new GridLayout(panelAmount, 1));
 
         // Create SubPanels for different use cases
@@ -213,6 +213,7 @@ class TTTPanel extends JPanel {
         guiReset();
     }
 
+    // Resets GUI And The Game
     public static void guiReset() {
 
         firstRow.left.setBackground(Color.WHITE);
@@ -247,6 +248,7 @@ class TTTPanel extends JPanel {
         TTTPAS.playPanel.changeButtonColor(Color.WHITE);
     }
 
+    // Returns The Current Step
     public static char setStep() {
         if (BOT_ACTIVE) {
             return 'X';
@@ -261,26 +263,33 @@ class TTTPanel extends JPanel {
         return ' ';
     }
 
+    // Handles The Basic Game Mechanic
     public static String gameHandler(List<String> position) {
-        gameStart = false;
-        TTTPAS.playPanel.changeButtonColor(Color.GRAY);
+        gameStart = false; // Sets gameStart To false As The Game Has Now Begun
+        TTTPAS.playPanel.changeButtonColor(Color.GRAY); // Change Color Of The Button To Activate MiniMax To Grey
 
+        // Check If Game Is Still Going On
         if (!gameStatus) {
             return " ";
         }
-        currentBoard = TTTPAS.getField();
 
+        currentBoard = TTTPAS.getField(); // Fetches The Current Board From Superclass TTTPAS
+
+        // Check If Move Is Valid
         if (invalidTurn(currentBoard, row, column)) {
             return " ";
         }
 
-        // Setting the next varible to be shown
+        // Fetching The Character Of The Current Move
         char step = setStep();
 
+        // Update The Current Board In Superclass TTTPAS With The Players Move
         TTTPAS.setField(row, column, step);
 
+        // Run Check On Result Of The Move
         instructionList = checkWin(TTTPAS.getField(), step);
 
+        // Evaluate Instructions And Proceed With Showing Win, Draw Or Next Turn
         switch (instructionList.get(0)) {
             case "row":
                 switch (instructionList.get(1)) {
@@ -354,234 +363,248 @@ class TTTPanel extends JPanel {
 
         }
 
+        // Execute Minimax's Move If The Game Is Still Ongoing
         if (BOT_ACTIVE && gameStatus) {
-            List<Integer> oppMove = virtualOpponent.findBestMove(TTTPAS.getField());
-
-            switch (oppMove.get(0)) {
-                case 0:
-                    TTTPAS.setField(oppMove.get(0), oppMove.get(1), 'O');
-                    switch (oppMove.get(1)) {
-                        case 0:
-                            firstRow.left.setText(String.valueOf('O'));
-                            break;
-
-                        case 1:
-                            firstRow.mid.setText(String.valueOf('O'));
-                            break;
-
-                        case 2:
-                            firstRow.right.setText(String.valueOf('O'));
-                            break;
-
-                        default:
-                            break;
-                    }
-                    break;
-
-                case 1:
-                    TTTPAS.setField(oppMove.get(0), oppMove.get(1), 'O');
-                    switch (oppMove.get(1)) {
-                        case 0:
-                            secondRow.left.setText(String.valueOf('O'));
-                            break;
-
-                        case 1:
-                            secondRow.mid.setText(String.valueOf('O'));
-                            break;
-
-                        case 2:
-                            secondRow.right.setText(String.valueOf('O'));
-                            break;
-
-                        default:
-                            break;
-                    }
-                    break;
-
-                case 2:
-                    TTTPAS.setField(oppMove.get(0), oppMove.get(1), 'O');
-                    switch (oppMove.get(1)) {
-                        case 0:
-                            thirdRow.left.setText(String.valueOf('O'));
-                            break;
-
-                        case 1:
-                            thirdRow.mid.setText(String.valueOf('O'));
-                            break;
-
-                        case 2:
-                            thirdRow.right.setText(String.valueOf('O'));
-                            break;
-
-                        default:
-                            break;
-                    }
-                    break;
-
-                default:
-                    char[][] drawBoard = TTTPAS.getField();
-                    boolean space = false;
-                    for (int i = 0; i < 3; i++) {
-                        for (int j = 0; j < 3; j++) {
-
-                            if (drawBoard[i][j] == ' ' && !space) {
-
-                                switch (i) {
-                                    case 0:
-                                        switch (j) {
-                                            case 0:
-                                                TTTPAS.setField(i, j, 'O');
-                                                firstRow.left.setText(String.valueOf('O'));
-                                                break;
-
-                                            case 1:
-                                                TTTPAS.setField(i, j, 'O');
-                                                firstRow.mid.setText(String.valueOf('O'));
-                                                break;
-
-                                            case 2:
-                                                TTTPAS.setField(i, j, 'O');
-                                                firstRow.right.setText(String.valueOf('O'));
-                                                break;
-
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    case 1:
-                                        switch (j) {
-                                            case 0:
-                                                TTTPAS.setField(i, j, 'O');
-                                                secondRow.left.setText(String.valueOf('O'));
-                                                break;
-
-                                            case 1:
-                                                TTTPAS.setField(i, j, 'O');
-                                                secondRow.mid.setText(String.valueOf('O'));
-                                                break;
-
-                                            case 2:
-                                                TTTPAS.setField(i, j, 'O');
-                                                secondRow.right.setText(String.valueOf('O'));
-                                                break;
-
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    case 2:
-                                        switch (j) {
-                                            case 0:
-                                                TTTPAS.setField(i, j, 'O');
-                                                thirdRow.left.setText(String.valueOf('O'));
-                                                break;
-
-                                            case 1:
-                                                TTTPAS.setField(i, j, 'O');
-                                                thirdRow.mid.setText(String.valueOf('O'));
-                                                break;
-
-                                            case 2:
-                                                TTTPAS.setField(i, j, 'O');
-                                                thirdRow.right.setText(String.valueOf('O'));
-                                                break;
-
-                                            default:
-                                                break;
-                                        }
-                                        break;
-                                }
-                                space = true;
-                            }
-
-                        }
-
-                    }
-
-                    break;
-            }
+            minmaxMove();
         }
 
-        if (BOT_ACTIVE) {
-            instructionList = checkWin(TTTPAS.getField(), step);
-
-            switch (instructionList.get(0)) {
-                case "row":
-                    switch (instructionList.get(1)) {
-                        case "0":
-                            firstRow.left.setBackground(Color.GREEN);
-                            firstRow.mid.setBackground(Color.GREEN);
-                            firstRow.right.setBackground(Color.GREEN);
-                            break;
-
-                        case "1":
-                            secondRow.left.setBackground(Color.GREEN);
-                            secondRow.mid.setBackground(Color.GREEN);
-                            secondRow.right.setBackground(Color.GREEN);
-                            break;
-
-                        case "2":
-                            thirdRow.left.setBackground(Color.GREEN);
-                            thirdRow.mid.setBackground(Color.GREEN);
-                            thirdRow.right.setBackground(Color.GREEN);
-                            break;
-
-                        default:
-                            break;
-                    }
-                    break;
-
-                case "column":
-                    switch (instructionList.get(1)) {
-                        case "0":
-                            firstRow.left.setBackground(Color.GREEN);
-                            secondRow.left.setBackground(Color.GREEN);
-                            thirdRow.left.setBackground(Color.GREEN);
-                            break;
-
-                        case "1":
-                            firstRow.mid.setBackground(Color.GREEN);
-                            secondRow.mid.setBackground(Color.GREEN);
-                            thirdRow.mid.setBackground(Color.GREEN);
-                            break;
-
-                        case "2":
-                            firstRow.right.setBackground(Color.GREEN);
-                            secondRow.right.setBackground(Color.GREEN);
-                            thirdRow.right.setBackground(Color.GREEN);
-                            break;
-
-                        default:
-                            break;
-                    }
-                    break;
-
-                case "TB":
-                    firstRow.left.setBackground(Color.GREEN);
-                    secondRow.mid.setBackground(Color.GREEN);
-                    thirdRow.right.setBackground(Color.GREEN);
-                    break;
-
-                case "BT":
-                    firstRow.right.setBackground(Color.GREEN);
-                    secondRow.mid.setBackground(Color.GREEN);
-                    thirdRow.left.setBackground(Color.GREEN);
-                    break;
-
-                default:
-                    if (isSlotFree()) {
-                        outputLabel.setText(String.format("%s's Turn", TTTPAS.playPanel.getPlayerNames().get(0)));
-                    } else {
-                        outputLabel.setText("Draw");
-                    }
-                    break;
-            }
+        // Check
+        if (BOT_ACTIVE && gameStatus) {
+            checkMinmaxMove(step);
         }
 
         return String.valueOf(step);
+    }
 
+    private static void minmaxMove() {
+        List<Integer> oppMove = virtualOpponent.findBestMove(TTTPAS.getField());
+
+        switch (oppMove.get(0)) {
+            case 0:
+                TTTPAS.setField(oppMove.get(0), oppMove.get(1), 'O');
+                switch (oppMove.get(1)) {
+                    case 0:
+                        firstRow.left.setText(String.valueOf('O'));
+                        break;
+
+                    case 1:
+                        firstRow.mid.setText(String.valueOf('O'));
+                        break;
+
+                    case 2:
+                        firstRow.right.setText(String.valueOf('O'));
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
+            case 1:
+                TTTPAS.setField(oppMove.get(0), oppMove.get(1), 'O');
+                switch (oppMove.get(1)) {
+                    case 0:
+                        secondRow.left.setText(String.valueOf('O'));
+                        break;
+
+                    case 1:
+                        secondRow.mid.setText(String.valueOf('O'));
+                        break;
+
+                    case 2:
+                        secondRow.right.setText(String.valueOf('O'));
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
+            case 2:
+                TTTPAS.setField(oppMove.get(0), oppMove.get(1), 'O');
+                switch (oppMove.get(1)) {
+                    case 0:
+                        thirdRow.left.setText(String.valueOf('O'));
+                        break;
+
+                    case 1:
+                        thirdRow.mid.setText(String.valueOf('O'));
+                        break;
+
+                    case 2:
+                        thirdRow.right.setText(String.valueOf('O'));
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
+            default:
+                char[][] drawBoard = TTTPAS.getField();
+                boolean space = false;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+
+                        if (drawBoard[i][j] == ' ' && !space) {
+
+                            switch (i) {
+                                case 0:
+                                    switch (j) {
+                                        case 0:
+                                            TTTPAS.setField(i, j, 'O');
+                                            firstRow.left.setText(String.valueOf('O'));
+                                            break;
+
+                                        case 1:
+                                            TTTPAS.setField(i, j, 'O');
+                                            firstRow.mid.setText(String.valueOf('O'));
+                                            break;
+
+                                        case 2:
+                                            TTTPAS.setField(i, j, 'O');
+                                            firstRow.right.setText(String.valueOf('O'));
+                                            break;
+
+                                        default:
+                                            break;
+                                    }
+                                    break;
+
+                                case 1:
+                                    switch (j) {
+                                        case 0:
+                                            TTTPAS.setField(i, j, 'O');
+                                            secondRow.left.setText(String.valueOf('O'));
+                                            break;
+
+                                        case 1:
+                                            TTTPAS.setField(i, j, 'O');
+                                            secondRow.mid.setText(String.valueOf('O'));
+                                            break;
+
+                                        case 2:
+                                            TTTPAS.setField(i, j, 'O');
+                                            secondRow.right.setText(String.valueOf('O'));
+                                            break;
+
+                                        default:
+                                            break;
+                                    }
+                                    break;
+
+                                case 2:
+                                    switch (j) {
+                                        case 0:
+                                            TTTPAS.setField(i, j, 'O');
+                                            thirdRow.left.setText(String.valueOf('O'));
+                                            break;
+
+                                        case 1:
+                                            TTTPAS.setField(i, j, 'O');
+                                            thirdRow.mid.setText(String.valueOf('O'));
+                                            break;
+
+                                        case 2:
+                                            TTTPAS.setField(i, j, 'O');
+                                            thirdRow.right.setText(String.valueOf('O'));
+                                            break;
+
+                                        default:
+                                            break;
+                                    }
+                                    break;
+                            }
+                            space = true;
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    private static void checkMinmaxMove(char step) {
+        instructionList = checkWin(TTTPAS.getField(), step);
+
+        char[][] f = TTTPAS.getField();
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                System.out.println(f[i][j]);
+            }
+        }
+
+        switch (instructionList.get(0)) {
+            case "row":
+                switch (instructionList.get(1)) {
+                    case "0":
+                        firstRow.left.setBackground(Color.GREEN);
+                        firstRow.mid.setBackground(Color.GREEN);
+                        firstRow.right.setBackground(Color.GREEN);
+                        break;
+
+                    case "1":
+                        secondRow.left.setBackground(Color.GREEN);
+                        secondRow.mid.setBackground(Color.GREEN);
+                        secondRow.right.setBackground(Color.GREEN);
+                        break;
+
+                    case "2":
+                        thirdRow.left.setBackground(Color.GREEN);
+                        thirdRow.mid.setBackground(Color.GREEN);
+                        thirdRow.right.setBackground(Color.GREEN);
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
+            case "column":
+                switch (instructionList.get(1)) {
+                    case "0":
+                        firstRow.left.setBackground(Color.GREEN);
+                        secondRow.left.setBackground(Color.GREEN);
+                        thirdRow.left.setBackground(Color.GREEN);
+                        break;
+
+                    case "1":
+                        firstRow.mid.setBackground(Color.GREEN);
+                        secondRow.mid.setBackground(Color.GREEN);
+                        thirdRow.mid.setBackground(Color.GREEN);
+                        break;
+
+                    case "2":
+                        firstRow.right.setBackground(Color.GREEN);
+                        secondRow.right.setBackground(Color.GREEN);
+                        thirdRow.right.setBackground(Color.GREEN);
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
+            case "TB":
+                firstRow.left.setBackground(Color.GREEN);
+                secondRow.mid.setBackground(Color.GREEN);
+                thirdRow.right.setBackground(Color.GREEN);
+                break;
+
+            case "BT":
+                firstRow.right.setBackground(Color.GREEN);
+                secondRow.mid.setBackground(Color.GREEN);
+                thirdRow.left.setBackground(Color.GREEN);
+                break;
+
+            default:
+                if (isSlotFree()) {
+                    outputLabel.setText(String.format("%s's Turn", TTTPAS.playPanel.getPlayerNames().get(0)));
+                } else {
+                    outputLabel.setText("Draw");
+                }
+                break;
+        }
     }
 
     // Checks is space is empty
@@ -684,9 +707,9 @@ class TTTPanel extends JPanel {
     }
 
     public static List<String> orientationButton(Container parent, String position) {
-        first = firstRow.selfParent();
-        second = secondRow.selfParent();
-        third = thirdRow.selfParent();
+        List<Container> first = firstRow.selfParent();
+        List<Container> second = secondRow.selfParent();
+        List<Container> third = thirdRow.selfParent();
 
         if (first.contains(parent)) {
             row = 0;
@@ -714,7 +737,6 @@ class TTTPanel extends JPanel {
         }
 
         return Arrays.asList(String.valueOf(row), String.valueOf(column));
-
     }
 
     public static void setBotActive() {
