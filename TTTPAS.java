@@ -70,27 +70,32 @@ public class TTTPAS {
     // Global Board + Global Turn Indicator + Global Access To playPanel
     private static char[][] board = { { ' ', ' ', ' ' }, { ' ', ' ', ' ' }, { ' ', ' ', ' ' } };
     private static int turn = 0;
-    public static PlayPanel playPanel;
+    public static FunctionPanel funcPanel;
     public static WinnerBoard winBoard;
 
     // Adding Components To Main Frame
     public static void GUI() {
 
+        // Creating Window Of Program
         JFrame frame = new JFrame("TicTacToe – Type PAS");
-        frame.setSize(800, 500);
+        frame.setSize(800, 500); // Setting Window-Dimensions [800x500]
 
+        // Creating Main-Panel For The Frame
         JPanel mainFramePanel = new JPanel();
-        mainFramePanel.setLayout(new GridLayout(1, 3));
+        mainFramePanel.setLayout(new GridLayout(1, 3)); // Setting Panel's LayOut To GridLayout [1 row, 3 columns]
 
-        playPanel = new PlayPanel();
+        // Creating Function-Panel, Winnerboard-Panel and TicTacToe-Panel
+        funcPanel = new FunctionPanel();
+        winBoard = new WinnerBoard();
         TTTPanel ttt = new TTTPanel();
 
-        winBoard = new WinnerBoard();
-
-        mainFramePanel.add(playPanel);
+        // Adding Function-Panel, Winnerboard-Panel and TicTacToe-Panel To The
+        // Main-Panel
+        mainFramePanel.add(funcPanel);
         mainFramePanel.add(ttt);
         mainFramePanel.add(winBoard);
 
+        // Assign Close Action To Window
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
                 winBoard.saveData();
@@ -98,7 +103,10 @@ public class TTTPAS {
             }
         });
 
+        // Add Main-Panel To The Frame
         frame.getContentPane().add(mainFramePanel);
+
+        // Display Window
         frame.setVisible(true);
     }
 
@@ -107,7 +115,7 @@ public class TTTPAS {
         return board;
     }
 
-    // Update Board
+    // Update Board With Given Inputs
     public static void setField(int[] cords, char sign) {
         board[cords[0]][cords[1]] = sign;
     }
@@ -126,7 +134,7 @@ public class TTTPAS {
         return turn;
     }
 
-    // Set The Turn
+    // Set New Turn
     public static void setTurn(int num) {
         turn = num;
     }
@@ -144,7 +152,7 @@ public class TTTPAS {
         // Reserve Thread To Run The GUI
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                GUI();
+                GUI(); // –––– START PROGRAM –––– //
             }
         });
     }
@@ -153,8 +161,8 @@ public class TTTPAS {
 // Class TTTPanel
 /*
  * Contains The General Game
- * - Concatates The Board
- * - Defines The Basic Game Routine
+ * - Displays Board
+ * - Defines Basic Game Cycle
  */
 class TTTPanel extends JPanel {
     public static TPanelRow firstRow, secondRow, thirdRow; // Rows Of The TicTacToe Board From Subclass TPanelRow
@@ -162,34 +170,39 @@ class TTTPanel extends JPanel {
     private static JLabel outputLabel; // Initializes outputLabel
     private static JButton resetButton; // Initializes resetButton
     private static MinMax virtualOpponent = new MinMax(); // Initializes Class MinMax Containing The Minnax Algorithm
-    private static boolean IS_MINMAX = false;
-    private static boolean ALLOW_MINMAX_INTERACTION = true;
-    private static boolean GAME_END = false;
+    private static boolean IS_MINMAX = false; // Boolean To Tell If Minimax Is Active
+    private static boolean ALLOW_MINMAX_INTERACTION = true; // Boolean To Allow To Activate Mininmax To Be Activated
+    private static boolean GAME_END = false; // Boolean To Store Whether A Game Has Concluded
 
     // Basic Structure Of The TicTacToe Field And Directly Associated Components
     public TTTPanel() {
+
+        // Sets Layout To Gridlayout [5 rows, 1 column]
         this.setLayout(new GridLayout(panelAmount, 1));
 
         // Create SubPanels for different use cases
-        JPanel[][] subPanels = new JPanel[panelAmount][1];
+        JPanel[][] subPanels = new JPanel[panelAmount][1]; // Creating 2D-Array For Location Of Panels
         JPanel outputPanel = subPanels[0][0] = new JPanel();
         JPanel resetPanel = subPanels[4][0] = new JPanel();
         outputPanel.setLayout(new GridLayout(1, 1));
         resetPanel.setLayout(new GridLayout(1, 1));
 
+        // Add Rows Of The TicTacToe Field Using TPanelRow Class
         TPanelRow[][] tRows = new TPanelRow[panelAmount][1];
         firstRow = tRows[1][0] = new TPanelRow();
         secondRow = tRows[2][0] = new TPanelRow();
         thirdRow = tRows[3][0] = new TPanelRow();
 
+        // Creating Button To Reset The Board
         resetButton = new JButton("Reset");
-        resetButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        resetPanel.add(resetButton);
+        resetButton.setBorder(BorderFactory.createLineBorder(Color.BLACK)); // Adding Black Border To Button
+        resetPanel.add(resetButton); // Adding Button To Designated Panel
 
+        // Assign ActionListener To The Reset-Button
         resetButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                Reset();
+                Reset(); // Calling Reset Function When Button Is Clicked
             }
         });
 
@@ -211,6 +224,7 @@ class TTTPanel extends JPanel {
     // Resets GUI And The Game
     public static void Reset() {
 
+        // Color All Fields White
         firstRow.left.setBackground(Color.WHITE);
         firstRow.mid.setBackground(Color.WHITE);
         firstRow.right.setBackground(Color.WHITE);
@@ -222,6 +236,7 @@ class TTTPanel extends JPanel {
         thirdRow.right.setBackground(Color.WHITE);
         resetButton.setBackground(Color.WHITE);
 
+        // Erase Text Of All Fields
         firstRow.left.setText("");
         firstRow.mid.setText("");
         firstRow.right.setText("");
@@ -231,85 +246,117 @@ class TTTPanel extends JPanel {
         thirdRow.left.setText("");
         thirdRow.mid.setText("");
         thirdRow.right.setText("");
+
+        // Reset OutputLabel Instruction To Default
         outputLabel.setText(String.format("Click A Field To Begin"));
 
+        // Reset Turn To 2
         TTTPAS.setTurn(2);
+
+        // Reset Stored Board
         TTTPAS.resetField();
 
-        TTTPAS.playPanel.changeButtonColor(Color.WHITE);
+        // Color Button To Activate Minimax White
+        TTTPAS.funcPanel.changeButtonColor(Color.WHITE);
 
-        ALLOW_MINMAX_INTERACTION = true;
-        GAME_END = false;
+        ALLOW_MINMAX_INTERACTION = true; // Allow To Activate Minimax
+        GAME_END = false; // Reset Game Status
     }
 
+    // Main Function To Handle Game Cycle
     public static void gameHandler(Container buttonParent, String position) {
+
+        // Check If A Slot On The Field Is Free –– If All Slots Taken...
         if (!isSlotFree(TTTPAS.getField())) {
-            return;
+            return; // End gameHandler
         }
 
+        // Check If Game Has Concluded –– If Concluded...
         if (GAME_END) {
-            return;
+            return; // End gameHandler
         }
 
-        ALLOW_MINMAX_INTERACTION = false;
+        ALLOW_MINMAX_INTERACTION = false; // Disallow Activation Of Minimax Mid-Game
+        char step = newStep(); // Choose New Symbol ['X' OR 'O']
+        int[] fieldCoordinates = buttonOrientation(buttonParent, position); // Receive Field-Coordinates Of The Clicked
+                                                                            // TTT-Field
 
-        char step = newStep();
-        int[] fieldCoordinates = buttonOrientation(buttonParent, position);
-
+        // Check If Move Is Legal –– If Move is Illegal
         if (illegalMove(fieldCoordinates)) {
-            return;
+            return; // End gameHandler
         }
 
-        TTTPAS.setField(fieldCoordinates, step);
-        guiSetMove(fieldCoordinates, step);
+        TTTPAS.setField(fieldCoordinates, step); // Update 2D-Array In Superclass
+        guiSetMove(fieldCoordinates, step); // Call guiSetMove To Display Move
 
+        // Check If Move Was A Winning Move –– If Game Is Won...
         if (checkWin(TTTPAS.getField())) {
-            GAME_END = true;
-            declareWin(step);
-            showWin(TTTPAS.getField());
-            return;
+            GAME_END = true; // Set Game Status To Concluded
+            declareWin(step); // Process Win Internally Using declareWin Function
+            showWin(TTTPAS.getField()); // Update GUI To Show Winning Line
+            return; // End gameHandler
         }
 
+        // Check If A Slot On The Field Is Free –– If All Slots Taken...
         if (!isSlotFree(TTTPAS.getField())) {
-            outputLabel.setText("Draw");
-            return;
+            outputLabel.setText("Draw"); // Display Draw
+            return; // End gameHandler
         }
 
-        outputLabel.setText(String.format("%s's Turn", TTTPAS.playPanel.getPlayerName(step)));
+        // Display Name Of Next Player
+        outputLabel.setText(String.format("%s's Turn", TTTPAS.funcPanel.getPlayerName(step)));
+
+        // ----- !!! END OF PLAYER MOVES !!! ----- //
+
+        // Check If Minimax Is Active –– If Minimax Is Inactive...
         if (!IS_MINMAX) {
-            return;
+            return; // End gameHandler
         }
 
-        // ----- !!! END OF PLAYER MOVES !!! -----
-
+        // Check If A Slot On The Field Is Free –– If All Slots Taken...
         if (!isSlotFree(TTTPAS.getField())) {
-            return;
+            return; // End gameHandler
         }
 
+        // Check If Game Has Concluded –– If Concluded...
         if (GAME_END) {
-            return;
+            return; // End gameHandler
         }
 
-        step = newStep();
-        fieldCoordinates = virtualOpponent.findBestMove(TTTPAS.getField());
+        step = newStep(); // Choose New Symbol [Always 'O']
+        fieldCoordinates = virtualOpponent.findBestMove(TTTPAS.getField()); // Let Minimax Choose Movce
 
+        // Check If Move Is Legal –– If Move is Illegal
         if (illegalMove(fieldCoordinates)) {
-            return;
+            char[][] escapeBoard = TTTPAS.getField(); // Get Current Board
+
+            // Choose First Valid Move
+            for (int n = 0; n < 3; n++) {
+                for (int m = 0; m < 3; m++) {
+                    if (escapeBoard[n][m] == ' ') {
+                        fieldCoordinates[0] = n;
+                        fieldCoordinates[1] = m;
+                    }
+                }
+            }
         }
 
-        TTTPAS.setField(fieldCoordinates, step);
-        guiSetMove(fieldCoordinates, step);
+        TTTPAS.setField(fieldCoordinates, step); // Update 2D-Array In Superclass
+        guiSetMove(fieldCoordinates, step); // Call guiSetMove To Display Move
 
+        // Check If Move Was A Winning Move –– If Game Is Won...
         if (checkWin(TTTPAS.getField())) {
-            GAME_END = true;
-            declareWin('!');
-            showWin(TTTPAS.getField());
-            return;
+            GAME_END = true; // Set Game Status To Concluded
+            declareWin('!'); // Process Win Internally Using declareWin Function and '!' To Indicate Minimax
+                             // As Winner
+            showWin(TTTPAS.getField()); // Update GUI To Show Winning Line
+            return; // End gameHandler
         }
 
+        // Check If A Slot On The Field Is Free –– If All Slots Taken...
         if (!isSlotFree(TTTPAS.getField())) {
-            outputLabel.setText("Draw");
-            return;
+            outputLabel.setText("Draw"); // Display Draw
+            return; // End gameHandler
         }
     }
 
@@ -376,12 +423,12 @@ class TTTPanel extends JPanel {
             outputLabel.setText("Winner: MINIMAX");
             return;
         } else if (IS_MINMAX && symbol != '!') {
-            String winner = TTTPAS.playPanel.getPlayerName(symbol);
+            String winner = TTTPAS.funcPanel.getPlayerName(symbol);
             outputLabel.setText("Winner: " + winner);
             return;
         }
 
-        String winner = TTTPAS.playPanel.getPlayerName(symbol);
+        String winner = TTTPAS.funcPanel.getPlayerName(symbol);
         outputLabel.setText("Winner: " + winner);
         if (winner != "X" && winner != "O") {
             TTTPAS.winBoard.updateDatabase(winner);
@@ -616,12 +663,12 @@ class TPanelRow extends JPanel {
 
 }
 
-class PlayPanel extends JPanel {
+class FunctionPanel extends JPanel {
 
     private static JTextField playerOneText, playerTwoText;
     private static JButton activateOpponent;
 
-    public PlayPanel() {
+    public FunctionPanel() {
         this.setLayout(new GridLayout(2, 1));
 
         JPanel mediaPanel = new JPanel();
@@ -939,7 +986,6 @@ class DataBase {
 }
 
 class MinMax {
-
     private static char player = 'X', algo = 'O';
 
     public MinMax() {
@@ -961,9 +1007,9 @@ class MinMax {
 
         for (int row = 0; row < 3; row++) {
             if (board[row][0] == board[row][1] && board[row][1] == board[row][2]) {
-                if (board[row][0] == algo) {
+                if (board[row][0] == player) {
                     return +10;
-                } else if (board[row][0] == player) {
+                } else if (board[row][0] == algo) {
                     return -10;
                 }
             }
@@ -971,42 +1017,42 @@ class MinMax {
 
         for (int col = 0; col < 3; col++) {
             if (board[0][col] == board[1][col] && board[1][col] == board[2][col]) {
-                if (board[0][col] == algo) {
+                if (board[0][col] == player) {
                     return +10;
-                } else if (board[0][col] == player) {
+                } else if (board[0][col] == algo) {
                     return -10;
                 }
             }
         }
 
         if (board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
-            if (board[0][0] == algo) {
+            if (board[0][0] == player) {
                 return +10;
-            } else if (board[0][0] == player) {
+            } else if (board[0][0] == algo) {
                 return -10;
             }
         }
 
         if (board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
-            if (board[0][2] == algo) {
+            if (board[0][2] == player) {
                 return +10;
-            } else if (board[0][2] == player) {
+            } else if (board[0][2] == algo) {
                 return -10;
             }
         }
         return 0;
     }
 
-    private static int minimax(char board[][], int depth, Boolean isMax, int alpha, int beta) {
+    private static int minimax(char board[][], int depth, Boolean isMax) {
 
         int score = evaluate(board);
 
         if (score == 10) {
-            return score - depth;
+            return score;
         }
 
         if (score == -10) {
-            return score + depth;
+            return score;
         }
 
         if (!isMovesLeft(board)) {
@@ -1015,59 +1061,47 @@ class MinMax {
 
         if (isMax) {
 
-            for (int i = 0; i <= 2; i++) {
-                for (int j = 0; j <= 2; j++) {
+            int best = -1000;
 
-                    if (board[i][j] == ' ') {
-
-                        board[i][j] = algo;
-
-                        score = Math.max(score, minimax(board, depth + 1, !isMax, alpha, beta));
-
-                        board[i][j] = ' ';
-
-                        if (score >= beta) {
-                            return beta;
-                        }
-
-                        if (score > alpha) {
-                            alpha = score;
-                        }
-                    }
-                }
-            }
-            return alpha;
-
-        } else {
-
-            for (int i = 0; i <= 2; i++) {
-                for (int j = 0; j <= 2; j++) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
 
                     if (board[i][j] == ' ') {
 
                         board[i][j] = player;
 
-                        score = Math.min(score, minimax(board, depth + 1, isMax, alpha, beta));
+                        best = Math.max(best, minimax(board, depth + 1, !isMax));
 
                         board[i][j] = ' ';
-
-                        if (score <= alpha) {
-                            return alpha;
-                        }
-
-                        if (score < beta) {
-                            beta = score;
-                        }
                     }
                 }
             }
-            return beta;
+            return best;
+
+        } else {
+
+            int best = 1000;
+
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+
+                    if (board[i][j] == ' ') {
+
+                        board[i][j] = algo;
+
+                        best = Math.min(best, minimax(board, depth + 1, !isMax));
+
+                        board[i][j] = ' ';
+                    }
+                }
+            }
+            return best;
         }
     }
 
     public int[] findBestMove(char board[][]) {
-        int bestVal = -1000;
-        int row = 9, col = 9;
+        int bestVal = 1000;
+        int row = -1, col = -1;
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -1076,11 +1110,11 @@ class MinMax {
 
                     board[i][j] = algo;
 
-                    int moveVal = minimax(board, 0, false, -1000, 1000);
+                    int moveVal = minimax(board, 0, true);
 
                     board[i][j] = ' ';
 
-                    if (moveVal > bestVal) {
+                    if (moveVal < bestVal) {
                         row = i;
                         col = j;
                         bestVal = moveVal;
@@ -1088,14 +1122,7 @@ class MinMax {
                 }
             }
         }
-
-        System.out.println(" ");
-        System.out.println(bestVal);
-        System.out.println(row + " " + col);
-        System.out.println(" ");
-
         int[] result = { row, col };
-
         return result;
     }
 }
