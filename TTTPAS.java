@@ -626,22 +626,26 @@ class PlayPanel extends JPanel {
 
         JPanel mediaPanel = new JPanel();
         JPanel instructionPanel = new JPanel();
-        mediaPanel.setLayout(new GridLayout(3, 1));
+        mediaPanel.setLayout(new GridLayout(4, 1));
         instructionPanel.setLayout(new GridLayout(3, 1));
 
-        JPanel[][] subPanels = new JPanel[3][1];
-        JPanel botPanel = subPanels[0][0] = new JPanel();
-        JPanel playerOnePanel = subPanels[1][0] = new JPanel();
-        JPanel playerTwoPanel = subPanels[2][0] = new JPanel();
-        botPanel.setLayout(new GridLayout(1, 1));
+        JPanel[][] subPanels = new JPanel[4][1];
+        JPanel memoryPanel = subPanels[0][0] = new JPanel();
+        JPanel plusPanel = subPanels[1][0] = new JPanel();
+        JPanel playerOnePanel = subPanels[2][0] = new JPanel();
+        JPanel playerTwoPanel = subPanels[3][0] = new JPanel();
+        memoryPanel.setLayout(new GridLayout(1, 1));
+        plusPanel.setLayout(new GridLayout(1, 1));
         playerOnePanel.setLayout(new GridLayout(1, 2));
         playerTwoPanel.setLayout(new GridLayout(1, 2));
 
         JButton quitButton = new JButton("Quit");
         activateOpponent = new JButton("Activate Virtual Opponent");
+        JButton clearMemory = new JButton("Erase Leaderbaord");
 
         activateOpponent.setBackground(Color.WHITE);
         quitButton.setBackground(Color.WHITE);
+        clearMemory.setBackground(Color.WHITE);
 
         JLabel playerOneLabel = new JLabel("Player X Name:", SwingConstants.CENTER);
         JLabel playerTwoLabel = new JLabel("Player O Name:", SwingConstants.CENTER);
@@ -674,6 +678,13 @@ class PlayPanel extends JPanel {
             }
         });
 
+        clearMemory.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                TTTPAS.winBoard.clearLeaderboard();
+            }
+        });
+
         quitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
@@ -682,7 +693,8 @@ class PlayPanel extends JPanel {
             }
         });
 
-        botPanel.add(activateOpponent);
+        memoryPanel.add(clearMemory);
+        plusPanel.add(activateOpponent);
         playerOnePanel.add(playerOneLabel);
         playerOnePanel.add(playerOneText);
         playerTwoPanel.add(playerTwoLabel);
@@ -691,7 +703,8 @@ class PlayPanel extends JPanel {
         instructionPanel.add(dummyLabel);
         instructionPanel.add(quitButton);
 
-        mediaPanel.add(botPanel);
+        mediaPanel.add(memoryPanel);
+        mediaPanel.add(plusPanel);
         mediaPanel.add(playerOnePanel);
         mediaPanel.add(playerTwoPanel);
 
@@ -847,6 +860,11 @@ class WinnerBoard extends JPanel {
     public void saveData() {
         database.saveRecords();
     }
+
+    public void clearLeaderboard() {
+        database.resetData();
+        setWinnerBoard();
+    }
 }
 
 class DataBase {
@@ -855,6 +873,10 @@ class DataBase {
 
     public DataBase() {
         memory = fetchContent();
+    }
+
+    public void resetData() {
+        memory.clear();
     }
 
     public Map<String, Integer> fetchContent() {
