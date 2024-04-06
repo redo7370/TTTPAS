@@ -39,6 +39,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -67,10 +68,9 @@ import javax.swing.JLabel;
  * – Return Instructions To Other Classes
  */
 public class TTTPAS {
-    // Global Board + Global Turn Indicator + Global Access To playPanel
-    private static char[][] board = { { ' ', ' ', ' ' }, { ' ', ' ', ' ' }, { ' ', ' ', ' ' } };
-    private static int turn = 0;
-    public static FunctionPanel funcPanel;
+    private static char[][] board = { { ' ', ' ', ' ' }, { ' ', ' ', ' ' }, { ' ', ' ', ' ' } }; // Global Board
+    private static int turn = 0; // Global Turn Indicator
+    public static FunctionPanel funcPanel; // Global funcPanel
     public static WinnerBoard winBoard;
 
     // Adding Components To Main Frame
@@ -160,7 +160,7 @@ public class TTTPAS {
 
 // Class TTTPanel
 /*
- * Contains The General Game
+ * Contains The General Game Logic
  * - Displays Board
  * - Defines Basic Game Cycle
  */
@@ -276,10 +276,11 @@ class TTTPanel extends JPanel {
             return; // End gameHandler
         }
 
+        TTTPAS.funcPanel.changeButtonColor(Color.GRAY); // Set Virtual Opponent Button Color To Gray
+
         ALLOW_MINMAX_INTERACTION = false; // Disallow Activation Of Minimax Mid-Game
         char step = newStep(); // Choose New Symbol ['X' OR 'O']
-        int[] fieldCoordinates = buttonOrientation(buttonParent, position); // Receive Field-Coordinates Of The Clicked
-                                                                            // TTT-Field
+        int[] fieldCoordinates = buttonOrientation(buttonParent, position); // Convert and Store Field-Coordinates
 
         // Check If Move Is Legal –– If Move is Illegal
         if (illegalMove(fieldCoordinates)) {
@@ -324,7 +325,7 @@ class TTTPanel extends JPanel {
         }
 
         step = newStep(); // Choose New Symbol [Always 'O']
-        fieldCoordinates = virtualOpponent.findBestMove(TTTPAS.getField()); // Let Minimax Choose Movce
+        fieldCoordinates = virtualOpponent.findBestMove(TTTPAS.getField()); // Store Minimax Move Coordinates
 
         // Check If Move Is Legal –– If Move is Illegal
         if (illegalMove(fieldCoordinates)) {
@@ -360,21 +361,22 @@ class TTTPanel extends JPanel {
         }
     }
 
+    // Color Lines That Lead To Win Green
     private static void showWin(char[][] board) {
-        for (int row = 0; row < 3; row++) {
+        for (int row = 0; row < 3; row++) { // Iterate Through All Rows –– If All Symbols In nth-Row Are Equal...
             if (board[row][0] == board[row][1] && board[row][1] == board[row][2] && board[row][0] != ' ') {
                 switch (row) {
-                    case 0:
+                    case 0: // Color First Row Green
                         firstRow.left.setBackground(Color.GREEN);
                         firstRow.mid.setBackground(Color.GREEN);
                         firstRow.right.setBackground(Color.GREEN);
                         break;
-                    case 1:
+                    case 1: // Color Second Row Green
                         secondRow.left.setBackground(Color.GREEN);
                         secondRow.mid.setBackground(Color.GREEN);
                         secondRow.right.setBackground(Color.GREEN);
                         break;
-                    case 2:
+                    case 2: // Color Third Row Green
                         thirdRow.left.setBackground(Color.GREEN);
                         thirdRow.mid.setBackground(Color.GREEN);
                         thirdRow.right.setBackground(Color.GREEN);
@@ -383,20 +385,20 @@ class TTTPanel extends JPanel {
             }
         }
 
-        for (int col = 0; col < 3; col++) {
+        for (int col = 0; col < 3; col++) { // Iterate Through All Columns –– If All Symbols In nth-Column Are Equal...
             if (board[0][col] == board[1][col] && board[1][col] == board[2][col] && board[0][col] != ' ') {
                 switch (col) {
-                    case 0:
+                    case 0: // Color First Column Green
                         firstRow.left.setBackground(Color.GREEN);
                         secondRow.left.setBackground(Color.GREEN);
                         thirdRow.left.setBackground(Color.GREEN);
                         break;
-                    case 1:
+                    case 1: // Color Second Column Green
                         firstRow.mid.setBackground(Color.GREEN);
                         secondRow.mid.setBackground(Color.GREEN);
                         thirdRow.mid.setBackground(Color.GREEN);
                         break;
-                    case 2:
+                    case 2: // Color Third Column Green
                         firstRow.right.setBackground(Color.GREEN);
                         secondRow.right.setBackground(Color.GREEN);
                         thirdRow.right.setBackground(Color.GREEN);
@@ -405,12 +407,14 @@ class TTTPanel extends JPanel {
             }
         }
 
+        // Check For Diagonal [0, 0] --> [2, 2]
         if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[1][1] != ' ') {
             firstRow.left.setBackground(Color.GREEN);
             secondRow.mid.setBackground(Color.GREEN);
             thirdRow.right.setBackground(Color.GREEN);
         }
 
+        // Check For Diagonal [0, 2] --> [2, 0]
         if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[1][1] != ' ') {
             firstRow.right.setBackground(Color.GREEN);
             secondRow.mid.setBackground(Color.GREEN);
@@ -418,99 +422,112 @@ class TTTPanel extends JPanel {
         }
     }
 
+    // Update Label To Show Winner
     private static void declareWin(char symbol) {
-        if (IS_MINMAX && symbol == '!') {
-            outputLabel.setText("Winner: MINIMAX");
+        if (IS_MINMAX && symbol == '!') { // If Minimax Is Active AND Symbol Is '!'
+            outputLabel.setText("Winner: MINIMAX"); // Winner = Minimax
             return;
-        } else if (IS_MINMAX && symbol != '!') {
-            String winner = TTTPAS.funcPanel.getPlayerName(symbol);
-            outputLabel.setText("Winner: " + winner);
+        } else if (IS_MINMAX && symbol != '!') { // If Minimax Is Active AND Symbol Is Not '!'
+            String winner = TTTPAS.funcPanel.getPlayerName(symbol); // Get Playername From Function-Panel
+            outputLabel.setText("Winner: " + winner); // Winner = Player
             return;
         }
 
-        String winner = TTTPAS.funcPanel.getPlayerName(symbol);
-        outputLabel.setText("Winner: " + winner);
-        if (winner != "X" && winner != "O") {
-            TTTPAS.winBoard.updateDatabase(winner);
+        // If Minimax Is Not Active
+        String winner = TTTPAS.funcPanel.getPlayerName(symbol); // Get Playername For Dedicated Symbol
+        outputLabel.setText("Winner: " + winner); // Winner = Player
+        if (winner != "X" && winner != "O") { // If Playername Isn't Default ['X' OR 'O']
+            TTTPAS.winBoard.updateDatabase(winner); // Update Leaderboard And Database
         }
     }
 
+    // Check If One Player Has One
     private static boolean checkWin(char[][] board) {
+        // Return True If Whole nth-Row Is Same Symbol
         for (int row = 0; row < 3; row++) {
             if (board[row][0] == board[row][1] && board[row][1] == board[row][2] && board[row][0] != ' ') {
                 return true;
             }
         }
 
+        // Return True If Whole nth-Column Is Same Symbol
         for (int col = 0; col < 3; col++) {
             if (board[0][col] == board[1][col] && board[1][col] == board[2][col] && board[0][col] != ' ') {
                 return true;
             }
         }
 
+        // Return True If Whole Diagonal [0, 0] --> [2, 2] Is Same Symbol
         if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[1][1] != ' ') {
             return true;
         }
 
+        // Return True If Whole Diagonal [0, 2] --> [2, 0] Is Same Symbol
         if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[1][1] != ' ') {
             return true;
         }
 
+        // Return False If All Lines Are Not Equal
         return false;
     }
 
+    // Check If At Least One Space Is Not Occupied
     private static boolean isSlotFree(char[][] board) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 if (board[row][col] == ' ') {
-                    return true;
+                    return true; // Return True If One Space Was Found
                 }
             }
         }
-        return false;
+        return false; // Return False If No Space Was Found
     }
 
+    // Check If Move Is Possible
     private static boolean illegalMove(int[] cords) {
-        char[][] board = TTTPAS.getField();
+        char[][] board = TTTPAS.getField(); // Get Current Board
         if (board[cords[0]][cords[1]] != ' ') {
-            return true;
+            return true; // Return True If Space On Board Is Occupied
         }
-        return false;
+        return false; // Return False If Space Is Not Occupied
     }
 
+    // Show Move In GUI
     private static void guiSetMove(int[] cords, char move) {
-        String text = String.valueOf(move);
+        String text = String.valueOf(move); // Convert Character To String
 
         switch (cords[0]) {
             case 0:
                 switch (cords[1]) {
                     case 0:
-                        firstRow.left.setText(text);
+                        firstRow.left.setText(text); // First Row – First Column [0, 0]
                         break;
                     case 1:
-                        firstRow.mid.setText(text);
+                        firstRow.mid.setText(text); // First Row – Second Column [0, 1]
                         break;
                     case 2:
-                        firstRow.right.setText(text);
+                        firstRow.right.setText(text); // First Row – Third Column [0, 2]
                         break;
                     default:
-                        System.exit(0);
+                        System.out.println("ILLEGAL INPUT –– guiSetMove FAILED");
+                        System.exit(0); // Exit Program If Illegal Input
                         break;
                 }
                 break;
             case 1:
                 switch (cords[1]) {
                     case 0:
-                        secondRow.left.setText(text);
+                        secondRow.left.setText(text); // Second Row – First Column [1, 0]
                         break;
                     case 1:
-                        secondRow.mid.setText(text);
+                        secondRow.mid.setText(text); // Second Row – Second Column [1, 1]
                         break;
                     case 2:
-                        secondRow.right.setText(text);
+                        secondRow.right.setText(text); // Second Row – Third Column [1, 2]
                         break;
                     default:
-                        System.exit(0);
+                        System.out.println("ILLEGAL INPUT –– guiSetMove FAILED");
+                        System.exit(0); // Exit Program If Illegal Input
                         break;
                 }
                 break;
@@ -518,169 +535,210 @@ class TTTPanel extends JPanel {
             case 2:
                 switch (cords[1]) {
                     case 0:
-                        thirdRow.left.setText(text);
+                        thirdRow.left.setText(text); // Third Row – First Column [2, 0]
                         break;
                     case 1:
-                        thirdRow.mid.setText(text);
+                        thirdRow.mid.setText(text); // Third Row – Second Column [2, 1]
                         break;
                     case 2:
-                        thirdRow.right.setText(text);
+                        thirdRow.right.setText(text); // Third Row – Third Column [2, 2]
                         break;
                     default:
-                        System.exit(0);
+                        System.out.println("ILLEGAL INPUT –– guiSetMove FAILED");
+                        System.exit(0); // Exit Program If Illegal Input
                         break;
                 }
                 break;
 
             default:
-                System.exit(0);
+                System.out.println("ILLEGAL INPUT –– guiSetMove FAILED");
+                System.exit(0); // Exit Program If Illegal Input
                 break;
         }
     }
 
+    // Choose New Symbol For Player Based On Current Turn In TTTPAS
     private static char newStep() {
-        int turnNum = TTTPAS.getTurn();
+        int turnNum = TTTPAS.getTurn(); // Get Turn From TTTPAS
+
+        // If Turn Is Even
         if (turnNum % 2 == 0) {
-            TTTPAS.setTurn(1);
+            TTTPAS.setTurn(1); // Set Turn In TTTPAS To 1
             return 'X';
         } else {
-            TTTPAS.setTurn(2);
+            TTTPAS.setTurn(2); // Set Turn In TTTPAS To 1
             return 'O';
         }
     }
 
+    // Figure Out Position Of Clicked Button Through Provided Container And Position
+    // In Row
     public static int[] buttonOrientation(Container parent, String buttonPosition) {
+        // Set Containers For Each Row
         List<Container> first = firstRow.selfParent();
         List<Container> second = secondRow.selfParent();
         List<Container> third = thirdRow.selfParent();
 
+        // Initialize New Array To Store Coordinates Of The Clicked Button
         int[] cords = new int[2];
 
+        // Check Which Row Is Parent Of Clicked Button
         if (first.contains(parent)) {
-            cords[0] = 0;
+            cords[0] = 0; // First Coordinate [Row] = 0
         } else if (second.contains(parent)) {
-            cords[0] = 1;
+            cords[0] = 1; // First Coordinate [Row] = 1
         } else if (third.contains(parent)) {
-            cords[0] = 2;
+            cords[0] = 2; // First Coordinate [Row] = 2
         }
 
+        // Check Which Position The Button Provided
         switch (buttonPosition) {
             case "left":
-                cords[1] = 0;
+                cords[1] = 0; // Second Coordinate [Column] = 0
                 break;
 
             case "mid":
-                cords[1] = 1;
+                cords[1] = 1; // Second Coordinate [Column] = 1
                 break;
 
             case "right":
-                cords[1] = 2;
+                cords[1] = 2; // Second Coordinate [Column] = 2
                 break;
 
             default:
                 break;
         }
-        return cords;
+        return cords; // Return Coordinations
     }
 
+    // Activate Minimax
     public static void setMinimaxActive() {
+        // If Minimax Is Inactive
         if (!IS_MINMAX) {
-            IS_MINMAX = true;
+            IS_MINMAX = true; // Activate Minimax
         } else {
-            IS_MINMAX = false;
+            IS_MINMAX = false; // Deactivate Minimax
         }
     }
 
+    // Return If Minimax Is Active
     public static boolean isMinimaxActive() {
         return IS_MINMAX;
     }
 
+    // Return If It Is Allowed To Activate Minimax
     public static boolean getPermission() {
         return ALLOW_MINMAX_INTERACTION;
     }
 
 }
 
+// Class TPanel Row
+/*
+ * Blueprint For Each Row Of TicTacToe Board
+ */
 class TPanelRow extends JPanel {
-    private Container parent;
-    public JButton left, mid, right;
-    private List<Container> parentList;
+    public JButton left, mid, right; // Initialize JButtons
 
+    // Basic Layout Of A Row
     public TPanelRow() {
-        this.setLayout(new GridLayout(1, 3));
-        JButton[][] topButtons = new JButton[1][3];
-        left = topButtons[0][0] = new JButton("1");
-        mid = topButtons[0][1] = new JButton("2");
-        right = topButtons[0][2] = new JButton("3");
+        this.setLayout(new GridLayout(1, 3)); // Set Layout To Gridlayout
+
+        JButton[][] buttons = new JButton[1][3]; // 2D-Array Of All JButtons
+        left = buttons[0][0] = new JButton("1");
+        mid = buttons[0][1] = new JButton("2");
+        right = buttons[0][2] = new JButton("3");
+
+        // Add Buttons To Panel
         this.add(left);
         this.add(mid);
         this.add(right);
 
+        // Assign Black Border To All Buttons
         left.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         mid.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         right.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
+        // Assign Actionlisteners To All Buttons
         left.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
+                // If Own Text Is Empty...
                 if (left.getText() != "") {
                     return;
                 }
-                parent = left.getParent();
-                callGameHandler(parent, "left");
+                Container parent = left.getParent();
+                callGameHandler(parent, "left"); // Call gameHandler
             }
         });
         mid.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
+                // If Own Text Is Empty...
                 if (mid.getText() != "") {
                     return;
                 }
-                parent = mid.getParent();
-                callGameHandler(parent, "mid");
+                Container parent = mid.getParent();
+                callGameHandler(parent, "mid"); // Call gameHandler
             }
         });
         right.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
+                // If Own Text Is Empty...
                 if (right.getText() != "") {
                     return;
                 }
-                parent = right.getParent();
-                callGameHandler(parent, "right");
+                Container parent = right.getParent();
+                callGameHandler(parent, "right"); // Call gameHandler
             }
         });
     }
 
+    // Return List Of Containers Of Parent From Each Button (Usually All Equal)
     public List<Container> selfParent() {
-        parentList = Arrays.asList(left.getParent(), mid.getParent(), right.getParent());
+        List<Container> parentList = Arrays.asList(left.getParent(), mid.getParent(), right.getParent());
         return parentList;
     }
 
+    // Execute Call To gameHandler
     protected static void callGameHandler(Container parent, String position) {
         TTTPanel.gameHandler(parent, position);
     }
 
 }
 
+// Class FunctionPanel
+/*
+ * Adds Additional Options For User To Change Game Mechanic
+ * - Activate Virtual Opponent
+ * - Designated Button To Quit Program
+ * - Clearing All Stored Data
+ * - Setting Own Playernames
+ */
 class FunctionPanel extends JPanel {
+    private static JTextField playerOneText, playerTwoText; // Initialize TextFields Of Player One And Player Two
+    private static JButton activateOpponent; // Initialize JButton To Activate Opponent
 
-    private static JTextField playerOneText, playerTwoText;
-    private static JButton activateOpponent;
-
+    // Layout Of Function-Panel
     public FunctionPanel() {
-        this.setLayout(new GridLayout(2, 1));
+        this.setLayout(new GridLayout(2, 1)); // Set Layout To Gridlayout
 
-        JPanel mediaPanel = new JPanel();
-        JPanel instructionPanel = new JPanel();
+        JPanel instructionPanel = new JPanel(); // Top Panel
+        JPanel mediaPanel = new JPanel(); // Bottom Panel
+
+        // Setting Gridlayouts To Subpanels
         mediaPanel.setLayout(new GridLayout(4, 1));
         instructionPanel.setLayout(new GridLayout(3, 1));
 
+        // Creating Subpanels Of mediaPanel
         JPanel[][] subPanels = new JPanel[4][1];
-        JPanel memoryPanel = subPanels[0][0] = new JPanel();
-        JPanel plusPanel = subPanels[1][0] = new JPanel();
-        JPanel playerOnePanel = subPanels[2][0] = new JPanel();
-        JPanel playerTwoPanel = subPanels[3][0] = new JPanel();
+        JPanel memoryPanel = subPanels[0][0] = new JPanel(); // For Button To Clear Leaderboard
+        JPanel plusPanel = subPanels[1][0] = new JPanel(); // For Button To Activate Minimax
+        JPanel playerOnePanel = subPanels[2][0] = new JPanel(); // For Name Of Player #1
+        JPanel playerTwoPanel = subPanels[3][0] = new JPanel(); // For Name Of Player #2
+
+        // Assigning Gridlayouts To Subpanels
         memoryPanel.setLayout(new GridLayout(1, 1));
         plusPanel.setLayout(new GridLayout(1, 1));
         playerOnePanel.setLayout(new GridLayout(1, 2));
@@ -1048,11 +1106,11 @@ class MinMax {
         int score = evaluate(board);
 
         if (score == 10) {
-            return score;
+            return score - depth;
         }
 
         if (score == -10) {
-            return score;
+            return score + depth;
         }
 
         if (!isMovesLeft(board)) {
