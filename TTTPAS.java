@@ -35,7 +35,6 @@ import java.awt.Color;
 import java.awt.event.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -57,7 +56,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
-// Main Class TTTPA
+// Main Class TTTPAS
 /*
  * Concatates All Subcomponents:
  * - TicTacToe Field
@@ -71,7 +70,7 @@ public class TTTPAS {
     private static char[][] board = { { ' ', ' ', ' ' }, { ' ', ' ', ' ' }, { ' ', ' ', ' ' } }; // Global Board
     private static int turn = 0; // Global Turn Indicator
     public static FunctionPanel funcPanel; // Global funcPanel
-    public static WinnerBoard winBoard;
+    public static WinnerBoard winBoard; // Global winBoard
 
     // Adding Components To Main Frame
     public static void GUI() {
@@ -98,7 +97,7 @@ public class TTTPAS {
         // Assign Close Action To Window
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-                winBoard.saveData();
+                frame.dispose();
                 System.exit(0);
             }
         });
@@ -149,6 +148,15 @@ public class TTTPAS {
             System.err.println("Cannot set LookAndFeel");
         }
 
+        // Add Hook To Runtime For Data-Safe Closing
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            public void run() {
+                System.out.println("Safe Shutdown Initiated...");
+                winBoard.saveData();
+                System.out.println("Safe Shutdown Done");
+            }
+        }, "Shutdown-thread"));
+
         // Reserve Thread To Run The GUI
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -166,10 +174,10 @@ public class TTTPAS {
  */
 class TTTPanel extends JPanel {
     public static TPanelRow firstRow, secondRow, thirdRow; // Rows Of The TicTacToe Board From Subclass TPanelRow
-    private int panelAmount = 5; // Amount Of Subpanels In TTTPanel
+    private final int panelAmount = 5; // Amount Of Subpanels In TTTPanel
     private static JLabel outputLabel; // Initializes outputLabel
     private static JButton resetButton; // Initializes resetButton
-    private static MinMax virtualOpponent = new MinMax(); // Initializes Class MinMax Containing The Minnax Algorithm
+    private static MinMax virtualOpponent = new MinMax(); // Initializes Class MinMax Containing The Minmax Algorithm
     private static boolean IS_MINMAX = false; // Boolean To Tell If Minimax Is Active
     private static boolean ALLOW_MINMAX_INTERACTION = true; // Boolean To Allow To Activate Mininmax To Be Activated
     private static boolean GAME_END = false; // Boolean To Store Whether A Game Has Concluded
@@ -206,17 +214,20 @@ class TTTPanel extends JPanel {
             }
         });
 
+        // Create And Add Output-Label
+        outputLabel = new JLabel("", SwingConstants.CENTER);
+        outputLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        outputPanel.add(outputLabel);
+
+        // Add Components To Panel
         this.add(outputPanel);
         this.add(firstRow);
         this.add(secondRow);
         this.add(thirdRow);
         this.add(resetPanel);
 
+        // Add Border To Panel
         this.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-
-        outputLabel = new JLabel("", SwingConstants.CENTER);
-        outputLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        outputPanel.add(outputLabel);
 
         Reset();
     }
@@ -277,8 +288,8 @@ class TTTPanel extends JPanel {
         }
 
         TTTPAS.funcPanel.changeButtonColor(Color.GRAY); // Set Virtual Opponent Button Color To Gray
-
         ALLOW_MINMAX_INTERACTION = false; // Disallow Activation Of Minimax Mid-Game
+
         char step = newStep(); // Choose New Symbol ['X' OR 'O']
         int[] fieldCoordinates = buttonOrientation(buttonParent, position); // Convert and Store Field-Coordinates
 
@@ -363,7 +374,8 @@ class TTTPanel extends JPanel {
 
     // Color Lines That Lead To Win Green
     private static void showWin(char[][] board) {
-        for (int row = 0; row < 3; row++) { // Iterate Through All Rows –– If All Symbols In nth-Row Are Equal...
+        // Iterate Through All Rows –– If All Symbols In nth-Row Are Equal...
+        for (int row = 0; row < 3; row++) {
             if (board[row][0] == board[row][1] && board[row][1] == board[row][2] && board[row][0] != ' ') {
                 switch (row) {
                     case 0: // Color First Row Green
@@ -385,7 +397,8 @@ class TTTPanel extends JPanel {
             }
         }
 
-        for (int col = 0; col < 3; col++) { // Iterate Through All Columns –– If All Symbols In nth-Column Are Equal...
+        // Iterate Through All Columns –– If All Symbols In nth-Column Are Equal...
+        for (int col = 0; col < 3; col++) {
             if (board[0][col] == board[1][col] && board[1][col] == board[2][col] && board[0][col] != ' ') {
                 switch (col) {
                     case 0: // Color First Column Green
@@ -424,7 +437,8 @@ class TTTPanel extends JPanel {
 
     // Update Label To Show Winner
     private static void declareWin(char symbol) {
-        if (IS_MINMAX && symbol == '!') { // If Minimax Is Active AND Symbol Is '!'
+        // If Minimax Is Active AND Symbol Is '!'
+        if (IS_MINMAX && symbol == '!') {
             outputLabel.setText("Winner: MINIMAX"); // Winner = Minimax
             return;
         } else if (IS_MINMAX && symbol != '!') { // If Minimax Is Active AND Symbol Is Not '!'
@@ -441,7 +455,7 @@ class TTTPanel extends JPanel {
         }
     }
 
-    // Check If One Player Has One
+    // Check If One Player Has Won
     private static boolean checkWin(char[][] board) {
         // Return True If Whole nth-Row Is Same Symbol
         for (int row = 0; row < 3; row++) {
@@ -486,8 +500,10 @@ class TTTPanel extends JPanel {
     // Check If Move Is Possible
     private static boolean illegalMove(int[] cords) {
         char[][] board = TTTPAS.getField(); // Get Current Board
+
+        // If Space On Board Is Occupied
         if (board[cords[0]][cords[1]] != ' ') {
-            return true; // Return True If Space On Board Is Occupied
+            return true; // Return True
         }
         return false; // Return False If Space Is Not Occupied
     }
@@ -566,7 +582,7 @@ class TTTPanel extends JPanel {
             TTTPAS.setTurn(1); // Set Turn In TTTPAS To 1
             return 'X';
         } else {
-            TTTPAS.setTurn(2); // Set Turn In TTTPAS To 1
+            TTTPAS.setTurn(2); // Set Turn In TTTPAS To 2
             return 'O';
         }
     }
@@ -633,7 +649,7 @@ class TTTPanel extends JPanel {
 
 }
 
-// Class TPanel Row
+// Class TPanelRow
 /*
  * Blueprint For Each Row Of TicTacToe Board
  */
@@ -744,29 +760,35 @@ class FunctionPanel extends JPanel {
         playerOnePanel.setLayout(new GridLayout(1, 2));
         playerTwoPanel.setLayout(new GridLayout(1, 2));
 
-        JButton quitButton = new JButton("Quit");
-        activateOpponent = new JButton("Activate Virtual Opponent");
-        JButton clearMemory = new JButton("Erase Leaderbaord");
+        // Create Buttons
+        JButton quitButton = new JButton("Quit"); // Quit-Button
+        activateOpponent = new JButton("Activate Virtual Opponent"); // Minimax-Button
+        JButton clearMemory = new JButton("Erase Leaderbaord"); // Database-Button
 
+        // Set Color Of Buttons To White
         activateOpponent.setBackground(Color.WHITE);
         quitButton.setBackground(Color.WHITE);
         clearMemory.setBackground(Color.WHITE);
 
-        JLabel playerOneLabel = new JLabel("Player X Name:", SwingConstants.CENTER);
-        JLabel playerTwoLabel = new JLabel("Player O Name:", SwingConstants.CENTER);
-        JLabel instructionLabel = new JLabel("Menu", SwingConstants.CENTER);
-        JLabel dummyLabel = new JLabel();
+        // Cretae Labels
+        JLabel playerOneLabel = new JLabel("Player X Name:", SwingConstants.CENTER); // Label Indicating Player #1 Name
+        JLabel playerTwoLabel = new JLabel("Player O Name:", SwingConstants.CENTER); // Label Indicating Player #1 Name
+        JLabel noticeLabel = new JLabel("Menu", SwingConstants.CENTER); // Label Indicating Purpose Of Area
+        JLabel dummyLabel = new JLabel(); // Placeholder
 
+        // Set Color Of Labels To White
         playerOnePanel.setBackground(Color.WHITE);
         playerTwoPanel.setBackground(Color.WHITE);
-        instructionLabel.setBackground(Color.WHITE);
+        noticeLabel.setBackground(Color.WHITE);
         quitButton.setBackground(Color.WHITE);
 
+        // Create Textfields For Playernames
         playerOneText = new JTextField();
         playerTwoText = new JTextField();
         playerOneText.setHorizontalAlignment(SwingConstants.CENTER);
         playerTwoText.setHorizontalAlignment(SwingConstants.CENTER);
 
+        // Add Actionlisteners To Buttons
         activateOpponent.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
@@ -793,18 +815,20 @@ class FunctionPanel extends JPanel {
         quitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                TTTPAS.winBoard.saveData();
                 System.exit(0);
             }
         });
 
+        // Adding Components To Designated B-Subpanels
         memoryPanel.add(clearMemory);
         plusPanel.add(activateOpponent);
         playerOnePanel.add(playerOneLabel);
         playerOnePanel.add(playerOneText);
         playerTwoPanel.add(playerTwoLabel);
         playerTwoPanel.add(playerTwoText);
-        instructionPanel.add(instructionLabel);
+
+        // Adding B-Subpanels And Components To A-Subpanels
+        instructionPanel.add(noticeLabel);
         instructionPanel.add(dummyLabel);
         instructionPanel.add(quitButton);
 
@@ -813,9 +837,11 @@ class FunctionPanel extends JPanel {
         mediaPanel.add(playerOnePanel);
         mediaPanel.add(playerTwoPanel);
 
+        // Adding A-Subpanels To Main-Panel
         this.add(instructionPanel);
         this.add(mediaPanel);
 
+        // Assigning Borders To All Components
         this.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         playerOneLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         playerTwoLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -825,57 +851,76 @@ class FunctionPanel extends JPanel {
         quitButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
     }
 
+    // Return Dedicated Playername
     public String getPlayerName(char symbol) {
-        String content;
+        String name;
+
+        // If symbol Is 'X'...
         if (symbol == 'X') {
-            content = playerOneText.getText();
-            if (content.isEmpty()) {
-                return "X";
+            name = playerOneText.getText(); // Get Name Of Player #1
+            // If Playername Is Default...
+            if (name.isEmpty()) {
+                return "X"; // Return Default
             }
         } else {
-            content = playerTwoText.getText();
-            if (content.isEmpty()) {
-                return "O";
+            name = playerTwoText.getText(); // Get Name Of Player #1
+            // If Playername Is Default...
+            if (name.isEmpty()) {
+                return "O"; // Return Default
             }
         }
-        return content;
+        return name; // Return Playername
     }
 
+    // Channge Color Of Minimax-Button
     public void changeButtonColor(Color color) {
         activateOpponent.setBackground(color);
     }
 }
 
+// Class WinnerBoard
+/*
+ * Displays Winnerboard
+ * Accespoint To Database
+ */
 class WinnerBoard extends JPanel {
-    private DataBase database;
-    private JLabel[][] playerLabels, winLabels;
+    private DataBase database; // Initialize Database
+    private JLabel[][] playerLabels, winLabels; // Initialize Labeltypes
 
     public WinnerBoard() {
-        this.setLayout(new GridLayout(3, 1));
+        this.setLayout(new GridLayout(3, 1)); // Set Gridlayout
 
+        // Create Subpanels
         JPanel[][] subPanels = new JPanel[3][1];
         JPanel upPanel = subPanels[0][0] = new JPanel();
         JPanel midPanel = subPanels[1][0] = new JPanel();
         JPanel downPanel = subPanels[2][0] = new JPanel();
+
+        // Set Gridlayout And Background
         upPanel.setLayout(new GridLayout(2, 1));
         midPanel.setLayout(new GridLayout(3, 2));
         downPanel.setLayout(new GridLayout(3, 2));
         midPanel.setBackground(Color.WHITE);
         downPanel.setBackground(Color.WHITE);
 
+        // Create DescriptionPanel And Set Gridlayout
         JPanel descriptionPanel = new JPanel();
         descriptionPanel.setLayout(new GridLayout(3, 1));
 
+        // Create Labels
         JLabel upperDummyLabel = new JLabel(" ");
         JLabel descriptionLabel = new JLabel("Winnerboard", SwingConstants.CENTER);
         JLabel lowerDummyLabel = new JLabel(" ");
         JLabel lowDummyLabel = new JLabel(" ");
+
+        // Add Labels To Designated Panels
         descriptionPanel.add(upperDummyLabel);
         descriptionPanel.add(descriptionLabel);
         descriptionPanel.add(lowerDummyLabel);
         upPanel.add(descriptionPanel);
         upPanel.add(lowDummyLabel);
 
+        // Create Labels For Playernames
         playerLabels = new JLabel[7][2];
         playerLabels[0][0] = new JLabel("Playername", SwingConstants.CENTER);
         playerLabels[1][0] = new JLabel("", SwingConstants.CENTER);
@@ -884,6 +929,7 @@ class WinnerBoard extends JPanel {
         playerLabels[4][0] = new JLabel("", SwingConstants.CENTER);
         playerLabels[5][0] = new JLabel("", SwingConstants.CENTER);
 
+        // Create Labels For Wincounts
         winLabels = new JLabel[7][2];
         winLabels[0][1] = new JLabel("Wins", SwingConstants.CENTER);
         winLabels[1][1] = new JLabel("", SwingConstants.CENTER);
@@ -892,287 +938,338 @@ class WinnerBoard extends JPanel {
         winLabels[4][1] = new JLabel("", SwingConstants.CENTER);
         winLabels[5][1] = new JLabel("", SwingConstants.CENTER);
 
+        // Add Labels To First Panel
         for (int i = 0; i <= 2; i++) {
             midPanel.add(playerLabels[i][0]);
             midPanel.add(winLabels[i][1]);
         }
 
+        // Add Labels To Second Panel
         for (int i = 3; i <= 5; i++) {
             downPanel.add(playerLabels[i][0]);
             downPanel.add(winLabels[i][1]);
         }
 
+        // Set Borders And Backgroudns Of Labels
         for (int i = 0; i <= 5; i++) {
             playerLabels[i][0].setBorder(BorderFactory.createLineBorder(Color.BLACK));
             winLabels[i][1].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-
             playerLabels[i][0].setBackground(Color.WHITE);
             winLabels[i][1].setBackground(Color.WHITE);
         }
 
+        // Add Subpanels To Main-Panel
         this.add(upPanel);
         this.add(midPanel);
         this.add(downPanel);
+
+        // Set Border Of Main-Panel
         this.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
+        // Try To Create New Database
         try {
             database = new DataBase();
         } catch (Exception e) {
             throw new IllegalStateException("Database Failed", e);
         }
 
+        // Show Received Data
         setWinnerBoard();
     }
 
+    // Evaluate Data And Display IT
     public void setWinnerBoard() {
-        Map<String, Integer> hashMap = database.memory;
-        Iterator<Map.Entry<String, Integer>> iterator = hashMap.entrySet().iterator();
+        Map<String, Integer> hashMap = database.getMemory(); // Get Data From Datatbase
+        Iterator<Map.Entry<String, Integer>> iterator = hashMap.entrySet().iterator(); // Initialize Iterator For Data
 
+        // Set Default Values For Leaderboard
         String[] winnerNames = { "N/A", "N/A", "N/A", "N/A", "N/A" };
-        int[] mostWins = { 0, 0, 0, 0, 0 };
+        int[] mostWins = { 0, 0, 0, 0, 0 }; //
 
+        // Iterate Through Data
         while (iterator.hasNext()) {
-            Map.Entry<String, Integer> entry = iterator.next();
-            String key = entry.getKey();
-            int value = entry.getValue();
+            Map.Entry<String, Integer> entry = iterator.next(); // Get Group
+            String key = entry.getKey(); // Srore Key
+            int value = entry.getValue(); // Store Value
 
-            boolean guard = true;
+            boolean guard = true; // Add Guard To Stop Iteration Once Item Is Set
 
+            // Iterate Through Stored Leaderboard
             for (int i = 0; i < 5; i++) {
+                // If Guard Is Active AND Value Is Greater Than Value In nth-Place
                 if (value > mostWins[i] && guard) {
+                    // Iterate Through List from Back To nth-Place
                     for (int j = 4; j > i; j--) {
+                        // Moving Wins And Names Towards End Of Arrays
                         mostWins[j] = mostWins[j - 1];
                         winnerNames[j] = winnerNames[j - 1];
                     }
+                    // Insert Values At nth-Place
                     mostWins[i] = value;
                     winnerNames[i] = key;
-                    guard = false;
+                    guard = false; // Deactivate Updates
                 }
             }
         }
 
-        for (int i = 1; i <= 5; i++) {
-            playerLabels[i][0].setText(winnerNames[i - 1]);
-            winLabels[i][1].setText(String.valueOf(mostWins[i - 1]));
+        // Display Values On Labels
+        for (int i = 0; i < 5; i++) {
+            playerLabels[i + 1][0].setText(winnerNames[i]);
+            winLabels[i + 1][1].setText(String.valueOf(mostWins[i]));
         }
     }
 
+    // Send New Winner To Database And Update Leaderboard
     public void updateDatabase(String name) {
         database.updateTable(name);
         setWinnerBoard();
     }
 
+    // Save Last Leaderboard
     public void saveData() {
         database.saveRecords();
     }
 
+    // Reset Database and Leaderboard
     public void clearLeaderboard() {
         database.resetData();
         setWinnerBoard();
     }
 }
 
+// Class Database
+/*
+ * .txt-File Interaction
+ */
 class DataBase {
-    public Map<String, Integer> memory;
-    private File file;
+    protected Map<String, Integer> memory; // Initializing Runtime-Memory
 
+    // Store Data In Runtime-Memory
     public DataBase() {
         memory = fetchContent();
     }
 
+    // Delete Runtime-Memory
     public void resetData() {
         memory.clear();
     }
 
+    // Fetch Contents From .txt-File ["data.txt"]
     public Map<String, Integer> fetchContent() {
+        // Try To Connect To .txt-File
         try {
-            file = new File("data.txt");
+            // Open New File Object And Check If It Exists/Create New File
+            File file = new File("data.txt");
             file.createNewFile();
 
-            Scanner scanFile = new Scanner(new FileReader(file));
-            memory = new HashMap<String, Integer>();
+            Scanner scanFile = new Scanner(new FileReader(file)); // Create New Reader For File
+            Map<String, Integer> fetch = new HashMap<String, Integer>(); // Assign New Hashmap For Runtime-Memory
 
+            // Iterate Through Contents Of .txt-File
             while (scanFile.hasNext()) {
+                // Get Playernames And Wincounts And Update Runtime-Memory
                 String player = scanFile.next();
                 int wins = Integer.parseInt(scanFile.next());
-                memory.put(player, wins);
+                fetch.put(player, wins);
             }
 
-            scanFile.close();
+            scanFile.close(); // Close Reader
+            return fetch; // Return Fetched-Data
 
-            return memory;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+        } catch (IOException e) {
+            throw new IllegalStateException(e); // Throw Exception If Fetch Fails
         }
     }
 
+    // Update Runtime-Memory
     public void updateTable(String winner) {
+        // If Player Already In Rumtime Memory...
         if (memory.containsKey(winner)) {
-            memory.put(winner, memory.get(winner) + 1);
+            memory.put(winner, memory.get(winner) + 1); // Increment Wincount
         } else {
-            memory.put(winner, 1);
+            memory.put(winner, 1); // Else Initialize New Notice
         }
     }
 
+    // Save Runtime-Memory To .txt-File
     public void saveRecords() {
-        Iterator<Map.Entry<String, Integer>> iterator = memory.entrySet().iterator();
+        Iterator<Map.Entry<String, Integer>> iterator = memory.entrySet().iterator(); // Initialize Iterator
+        String saveString = ""; // Initialize String For Save
 
-        String saveString = "";
-
+        // Iterate Through All Groups In Runtime-Memory
         while (iterator.hasNext()) {
             Map.Entry<String, Integer> entry = iterator.next();
-            String key = entry.getKey();
-            int value = entry.getValue();
-            saveString = saveString + key + " " + String.valueOf(value) + "\n";
+            String key = entry.getKey(); // Get Playername
+            int value = entry.getValue(); // Get Wincount
+            saveString = saveString + key + " " + String.valueOf(value) + "\n"; // Concat String
         }
 
+        // Print Data To .txt-File
         try {
-            file = new File("data.txt");
+            // Open New File Object And Check If It Exists/Create New File
+            File file = new File("data.txt");
             file.createNewFile();
-        } catch (IOException e) {
-            throw new IllegalStateException("DATA FILE DOES NOT EXIST");
-        }
+            PrintWriter writer = new PrintWriter(file); // Create Wirter For File
+            writer.print(saveString); // Print String To File
+            writer.close(); // Close Writer
 
-        try {
-            PrintWriter writer = new PrintWriter(file);
-            writer.print(saveString);
-            writer.close();
-        } catch (FileNotFoundException f) {
-            throw new IllegalStateException("DATA SAVE FAILED" + f);
+        } catch (IOException e) {
+            // Throw Exception If Save Failed
+            throw new IllegalStateException("DATA SAVE FAILED - saveRecords", e);
         }
+    }
+
+    // Return Runtime-Memory Contents
+    public Map<String, Integer> getMemory() {
+        return memory;
     }
 }
 
+// Class Minimax
+/*
+ * Virtual Opponent For Singleplayer
+ */
 class MinMax {
-    private static char player = 'X', algo = 'O';
+    private static char player = 'X', algo = 'O'; // Initialize Player And Minimax Symbols
 
     public MinMax() {
     }
 
+    // Check For Empty Cells On Board
     private static Boolean isMovesLeft(char board[][]) {
-
+        // Iterate Through Board
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == ' ') {
-                    return true;
+                    return true; // Return True If One Cell Is Empty
                 }
             }
         }
-        return false;
+        return false; // Return False If All Cells Are Filled
     }
 
+    // Return Value Of Board State
     private static int evaluate(char[][] board) {
-
+        // Check If Row Is Won
         for (int row = 0; row < 3; row++) {
             if (board[row][0] == board[row][1] && board[row][1] == board[row][2]) {
+                // If Player Won...
                 if (board[row][0] == player) {
-                    return +10;
+                    return +10; // Return +10
                 } else if (board[row][0] == algo) {
-                    return -10;
+                    return -10; // Else Return -10
                 }
             }
         }
 
+        // Check If Column Is Won
         for (int col = 0; col < 3; col++) {
             if (board[0][col] == board[1][col] && board[1][col] == board[2][col]) {
+                // If Player Won...
                 if (board[0][col] == player) {
-                    return +10;
+                    return +10; // Return +10
                 } else if (board[0][col] == algo) {
-                    return -10;
+                    return -10; // Else Return -10
                 }
             }
         }
 
+        // Check If Diagonal Is Won
         if (board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
+            // If Player Won...
             if (board[0][0] == player) {
-                return +10;
+                return +10; // Return +10
             } else if (board[0][0] == algo) {
-                return -10;
+                return -10; // Else Return -10
             }
         }
 
         if (board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
+            // If Player Won...
             if (board[0][2] == player) {
-                return +10;
+                return +10; // Return +10
             } else if (board[0][2] == algo) {
-                return -10;
+                return -10; // Else Return -10
             }
         }
-        return 0;
+        return 0; // Return 0 If Nobody Won
     }
 
+    // Find Move Values In Search-Tree
     private static int minimax(char board[][], int depth, Boolean isMax) {
-
         int score = evaluate(board);
 
+        // If Score Of Current Position Is 10...
         if (score == 10) {
-            return score - depth;
+            return score - depth; // Return Score - Amount Of Moves Until This Position
         }
 
+        // If Score Of Current Position Is -10...
         if (score == -10) {
-            return score + depth;
+            return score + depth; // Return Score + Amount Of Moves Until This Position
         }
 
+        // If Board Is In Draw State...
         if (!isMovesLeft(board)) {
-            return 0;
+            return 0; // Return 0
         }
 
+        // If Party Is Maximizing
         if (isMax) {
+            int best = -1000; // Set Low Value
 
-            int best = -1000;
-
+            // Iterate Through All Cells
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-
+                    // If Cell Is Empty...
                     if (board[i][j] == ' ') {
-
-                        board[i][j] = player;
-
+                        board[i][j] = player; // Set Temporary Player-Move
+                        // Recursive Call --> Pass Up Highest Value
                         best = Math.max(best, minimax(board, depth + 1, !isMax));
-
-                        board[i][j] = ' ';
+                        board[i][j] = ' '; // Undo Player-Move
                     }
                 }
             }
-            return best;
+            return best; // Return Best Value For Maximizer [best --> Positive]
 
+            // IF Party Is Minimizing
         } else {
+            int best = 1000; // Set High Value
 
-            int best = 1000;
-
+            // Iterate Through All Cells
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-
+                    // If Cell Is Empty...
                     if (board[i][j] == ' ') {
-
-                        board[i][j] = algo;
-
+                        board[i][j] = algo; // Set Temporary Minimax-Move
+                        // Recursive Call --> Pass Up Lowest Value
                         best = Math.min(best, minimax(board, depth + 1, !isMax));
-
-                        board[i][j] = ' ';
+                        board[i][j] = ' '; // Undo Minimax-Move
                     }
                 }
             }
-            return best;
+            return best; // Return Best Value For Minimizer [best --> Negative]
         }
     }
 
+    // Begin Search For Best Minimax-Move For Passed Board
     public int[] findBestMove(char board[][]) {
-        int bestVal = 1000;
-        int row = -1, col = -1;
+        int bestVal = 1000; // Set High Value
+        int row = -1, col = -1; // Initialize Row And Column Parameters
 
+        // Iterate Through All Cells
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-
+                // If Cell Is Empty...
                 if (board[i][j] == ' ') {
-
-                    board[i][j] = algo;
-
+                    board[i][j] = algo; // Set Temporary Minimax-Move
+                    // Recursive Call --> Pass Up Lowest Value
                     int moveVal = minimax(board, 0, true);
+                    board[i][j] = ' '; // Undo Minimax-Move
 
-                    board[i][j] = ' ';
-
+                    // If Value Is Lower Than Last Smallest Value...
                     if (moveVal < bestVal) {
+                        // Store Row And Column And Value
                         row = i;
                         col = j;
                         bestVal = moveVal;
@@ -1180,7 +1277,7 @@ class MinMax {
                 }
             }
         }
-        int[] result = { row, col };
-        return result;
+        int[] result = { row, col }; // Combine Row And Column In Array
+        return result; // Return Array
     }
 }
