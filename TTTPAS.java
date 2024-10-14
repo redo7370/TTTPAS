@@ -81,7 +81,7 @@ public class TTTPAS {
 
         // Creating Main-Panel For The Frame
         JPanel mainFramePanel = new JPanel();
-        mainFramePanel.setLayout(new GridLayout(1, 3)); // Setting Panel's LayOut To GridLayout [1 row, 3 columns]
+        mainFramePanel.setLayout(new GridLayout(1, 3)); // Setting Panel's Layout To GridLayout [1 row, 3 columns]
 
         // Creating Function-Panel, Winnerboard-Panel and TicTacToe-Panel
         funcPanel = new FunctionPanel();
@@ -151,9 +151,9 @@ public class TTTPAS {
         // Add Hook To Runtime For Data-Safe Closing
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             public void run() {
-                System.out.println("Safe Shutdown Initiated...");
+                System.out.println("Shutdown Initiated...");
                 winBoard.saveData();
-                System.out.println("Safe Shutdown Done");
+                System.out.println("Shutdown Done");
             }
         }, "Shutdown-thread"));
 
